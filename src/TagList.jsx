@@ -1,4 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TablePagination from "@mui/material/TablePagination";
+import TableRow from "@mui/material/TableRow";
 
 const url =
   "https://api.stackexchange.com/2.3/tags?order=desc&sort=popular&site=stackoverflow";
@@ -324,6 +332,25 @@ function TagList() {
     queryFn: getTags,
   });
 
+  const columns = [
+    {
+      id: "name",
+      label: "Name",
+    },
+    {
+      id: "count",
+      label: "Posts",
+    },
+    {
+      id: "is_required",
+      label: "Required",
+    },
+    {
+      id: "has_synonyms",
+      label: "Synonyms",
+    },
+  ];
+
   if (isPending) {
     return <span>Loading...</span>;
   }
@@ -332,9 +359,35 @@ function TagList() {
     return <span>Error: {error.message}</span>;
   }
 
-  console.log(data);
+  console.log(data.items);
 
-  return <div>taglist</div>;
+  return (
+    <TableContainer>
+      <Table stickyHeader>
+        <TableHead>
+          <TableRow>
+            {columns.map((column) => (
+              <TableCell key={column.id}>{column.label}</TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.items.map((tag) => (
+            <TableRow key={tag.name}>
+              <TableCell>{tag.name}</TableCell>
+              <TableCell>{tag.count}</TableCell>
+              <TableCell>
+                {tag.is_required ? "Required" : "Not required"}
+              </TableCell>
+              <TableCell>
+                {tag.has_synonyms ? "Has synonyms" : "No synonyms"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
 }
 
 export default TagList;
