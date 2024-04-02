@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
@@ -7,9 +8,9 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
-
-const url =
-  "https://api.stackexchange.com/2.3/tags?order=desc&sort=popular&site=stackoverflow";
+import PageSize from "./PageSize";
+import Page from "./Page";
+import TableSortLabel from "@mui/material/TableSortLabel";
 
 const data = {
   items: [
@@ -321,25 +322,38 @@ const data = {
   quota_remaining: 258,
 };
 
-function getTags() {
+function getTags(items, order, sortedColumn, page) {
+  const url = `https://api.stackexchange.com/2.3/tags?order=${order}&sort=${sortedColumn}&pagesize=${items}&page=${page}&site=stackoverflow`;
+  console.log(url);
   return data;
-  //   return fetch(url).then((response) => response.json());
+
+  // return fetch(url).then((response) => response.json());
 }
 
 function TagList() {
+  const [items, setItems] = useState(10);
+  const [order, setOrder] = useState("asc");
+  const [sortedColumn, setSortedColumn] = useState("name");
+  const [page, setPage] = useState(1);
+
+  console.log("Url should be: httt://stackexchange.com/items=" + items);
+  console.log("Url should be: httt://stackexchange.com/page=" + page);
+
   const { isPending, isError, error, data } = useQuery({
-    queryKey: ["tags"],
-    queryFn: getTags,
+    queryKey: ["tags", items, order, sortedColumn, page],
+    queryFn: () => getTags(items, order, sortedColumn, page),
   });
 
   const columns = [
     {
       id: "name",
       label: "Name",
+      sort: "name",
     },
     {
       id: "count",
       label: "Posts",
+      sort: "popular",
     },
     {
       id: "is_required",
@@ -358,35 +372,58 @@ function TagList() {
   if (isError) {
     return <span>Error: {error.message}</span>;
   }
+  const createSortHandler = (columnToSort) => () => {
+    setOrder(order === "asc" ? "desc" : "asc");
+    setSortedColumn(columnToSort);
 
-  console.log(data.items);
+    console.log({ columnToSort });
+  };
+
+  console.log({
+    sortedColumn,
+    order,
+  });
+  //   console.log(data.items);
 
   return (
-    <TableContainer>
-      <Table stickyHeader>
-        <TableHead>
-          <TableRow>
-            {columns.map((column) => (
-              <TableCell key={column.id}>{column.label}</TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.items.map((tag) => (
-            <TableRow key={tag.name}>
-              <TableCell>{tag.name}</TableCell>
-              <TableCell>{tag.count}</TableCell>
-              <TableCell>
-                {tag.is_required ? "Required" : "Not required"}
-              </TableCell>
-              <TableCell>
-                {tag.has_synonyms ? "Has synonyms" : "No synonyms"}
-              </TableCell>
+    <div className="container">
+      <PageSize setItems={setItems} />
+      <Page page={page} setPage={setPage} />
+      <TableContainer>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              {columns.map((column) => (
+                <TableCell key={column.id}>
+                  {column.label}
+                  {column.sort ? (
+                    <TableSortLabel
+                      active={sortedColumn === column.sort}
+                      direction={sortedColumn === column.sort ? order : "asc"}
+                      onClick={createSortHandler(column.sort)}
+                    ></TableSortLabel>
+                  ) : null}
+                </TableCell>
+              ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {data.items.map((tag) => (
+              <TableRow key={tag.name}>
+                <TableCell>{tag.name}</TableCell>
+                <TableCell>{tag.count}</TableCell>
+                <TableCell>
+                  {tag.is_required ? "Required" : "Not required"}
+                </TableCell>
+                <TableCell>
+                  {tag.has_synonyms ? "Has synonyms" : "No synonyms"}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </div>
   );
 }
 
