@@ -1,16 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
+
+import TagTable from "./TagTable";
 import PageSize from "./PageSize";
 import Page from "./Page";
-import TableSortLabel from "@mui/material/TableSortLabel";
 
 const data = {
   items: [
@@ -323,11 +316,24 @@ const data = {
 };
 
 function getTags(items, order, sortedColumn, page) {
-  const url = `https://api.stackexchange.com/2.3/tags?order=${order}&sort=${sortedColumn}&pagesize=${items}&page=${page}&site=stackoverflow`;
-  console.log(url);
-  return data;
+  //const url = `https://api.stackexchange.com/2.3/tags?order=${order}&sort=${sortedColumn}&pagesize=${items}&page=${page}&site=stackoverflow`;
+  //console.log(url);
+  let url = new URL(
+    "https://api.stackexchange.com/2.3/tags?site=stackoverflow"
+  );
+  let params = new URLSearchParams(url.search);
 
-  // return fetch(url).then((response) => response.json());
+  params.set("page", page);
+  params.set("order", order);
+  params.set("sort", sortedColumn);
+  params.set("pagesize", items);
+  url.search = params.toString();
+
+  // return data;
+
+  return new Promise((resolve) => setTimeout(() => resolve(data), 1000));
+
+  // return fetch(url.toString()).then((response) => response.json());
 }
 
 function TagList() {
@@ -344,35 +350,14 @@ function TagList() {
     queryFn: () => getTags(items, order, sortedColumn, page),
   });
 
-  const columns = [
-    {
-      id: "name",
-      label: "Name",
-      sort: "name",
-    },
-    {
-      id: "count",
-      label: "Posts",
-      sort: "popular",
-    },
-    {
-      id: "is_required",
-      label: "Required",
-    },
-    {
-      id: "has_synonyms",
-      label: "Synonyms",
-    },
-  ];
-
-  if (isPending) {
-    return <span>Loading...</span>;
-  }
+  // if (isPending) {
+  //   return <span>Loading...</span>;
+  // }
 
   if (isError) {
     return <span>Error: {error.message}</span>;
   }
-  const createSortHandler = (columnToSort) => () => {
+  const sortColumn = (columnToSort) => {
     setOrder(order === "asc" ? "desc" : "asc");
     setSortedColumn(columnToSort);
 
@@ -389,40 +374,16 @@ function TagList() {
     <div className="container">
       <PageSize setItems={setItems} />
       <Page page={page} setPage={setPage} />
-      <TableContainer>
-        <Table stickyHeader>
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <TableCell key={column.id}>
-                  {column.label}
-                  {column.sort ? (
-                    <TableSortLabel
-                      active={sortedColumn === column.sort}
-                      direction={sortedColumn === column.sort ? order : "asc"}
-                      onClick={createSortHandler(column.sort)}
-                    ></TableSortLabel>
-                  ) : null}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.items.map((tag) => (
-              <TableRow key={tag.name}>
-                <TableCell>{tag.name}</TableCell>
-                <TableCell>{tag.count}</TableCell>
-                <TableCell>
-                  {tag.is_required ? "Required" : "Not required"}
-                </TableCell>
-                <TableCell>
-                  {tag.has_synonyms ? "Has synonyms" : "No synonyms"}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {isPending ? (
+        "Loading..."
+      ) : (
+        <TagTable
+          sortedColumn={sortedColumn}
+          order={order}
+          sortColumn={sortColumn}
+          items={data?.items}
+        />
+      )}
     </div>
   );
 }
