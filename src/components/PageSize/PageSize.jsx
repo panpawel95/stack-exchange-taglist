@@ -1,6 +1,8 @@
 import { useState } from "react";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
+import SendIcon from "@mui/icons-material/Send";
+import "./pageSize.css";
 
 function PageSize({ setItems }) {
   const [pageSize, setPageSize] = useState("10");
@@ -25,19 +27,25 @@ function PageSize({ setItems }) {
     }
 
     setPageSize(String(value));
-    //click select - wtedy ma sie wywołac
   }
 
   return (
-    <div>
+    <div className="page-size">
       <TextField
         id="outlined-basic"
         label="Page size"
         variant="outlined"
+        color="secondary"
         onChange={handleSetPageSize}
         value={pageSize}
       />
-      <Button variant="outlined" onClick={() => setItems(pageSize)}>
+
+      <Button
+        variant="outlined"
+        color="secondary"
+        endIcon={<SendIcon />}
+        onClick={() => setItems(pageSize)}
+      >
         Select
       </Button>
     </div>
